@@ -884,11 +884,12 @@ class Window(object):
         if clearFrames:
             self.movieFrames = []
 
-    def _getRegionOfFrame(self, rect=[-1, 1, 1, -1],
-                          buffer='front', power2=False, squarePower2=False):
+    def _getRegionOfFrame(self, rect=(-1, 1, 1, -1),
+                          buffer='front', power2=False, squarePower2=False,
+                          mode='RGBA'):
         """
         Capture a rectangle (Left Top Right Bottom, norm units) of the window
-        as an RBGA image.
+        as an RBG[A] image.
 
         power2 can be useful with older OpenGL versions to avoid interpolation
         in PatchStim. If power2 or squarePower2, it will expand rect dimensions
@@ -899,7 +900,11 @@ class Window(object):
         # Ideally: rewrite using GL frame buffer object; glReadPixels == slow
 
         x, y = self.size  # of window, not image
-        imType = 'RGBA'  # not tested with anything else
+
+        if mode == 'RGB':
+            imType = 'RGB'
+        else:
+            imType = 'RGBA'
 
         # box corners in pix
         box = [(rect[0]/2. + 0.5)*x, (rect[1]/-2. + 0.5)*y,  # Left Top
@@ -914,14 +919,30 @@ class Window(object):
         else:
             GL.glReadBuffer(GL.GL_FRONT)
 
-        #http://www.opengl.org/sdk/docs/man/xhtml/glGetTexImage.xml
-        bufferDat = (GL.GLubyte * (4 * horz * vert))()
+        # allocate memory, set mode
+        if mode == 'RGB':
+            if x % 4:
+                msg = 'window size x is not a multiple of 4 (%i, %i)' % (x, y)
+                logging.error(msg)
+                raise AttributeError(msg)
+            if horz % 4 or vert % 4:
+                msg = 'region dimension(s) in pix are not multiples of 4 (%i, %i)' % (horz, vert)
+                logging.error(msg)
+                raise AttributeError(msg)
+            bufferDat = (GL.GLubyte * (3 * horz * vert))()
+            glmode = GL.GL_RGB
+        else:
+            bufferDat = (GL.GLubyte * (4 * horz * vert))()
+            glmode = GL.GL_RGBA
+
+        # read data
         GL.glReadPixels(box[0], box[1], horz, vert,
-                        GL.GL_RGBA, GL.GL_UNSIGNED_BYTE, bufferDat)
+                        glmode, GL.GL_UNSIGNED_BYTE, bufferDat)
+        #http://www.opengl.org/sdk/docs/man/xhtml/glGetTexImage.xml
         # not right
         #GL.glGetTexImage(GL.GL_TEXTURE_1D, 0,
         #                 GL.GL_RGBA, GL.GL_UNSIGNED_BYTE, bufferDat)
-        im = Image.fromstring(mode='RGBA', size=(horz, vert), data=bufferDat)
+        im = Image.fromstring(mode=imType, size=(horz, vert), data=bufferDat)
         region = im.transpose(Image.FLIP_TOP_BOTTOM)
 
         if power2 or squarePower2:  # use to avoid interpolation in PatchStim

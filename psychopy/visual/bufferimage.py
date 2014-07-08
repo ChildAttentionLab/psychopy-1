@@ -92,8 +92,7 @@ class BufferImageStim(ImageStim):
                 a list of item(s) to be drawn to the back buffer (in order). The back
                 buffer is first cleared (without the win being flip()ed), then stim items
                 are drawn, and finally the buffer (or part of it) is captured.
-                Each item needs to have its own .draw() method, and have the same
-                window as win.
+                Each item needs to have its own .draw() method.
             interpolate :
                 whether to use interpolation (default = True, generally good,
                 especially if you change the orientation)
@@ -119,10 +118,7 @@ class BufferImageStim(ImageStim):
             if hasattr(stim, '__iter__'):
                 for stimulus in stim:
                     try:
-                        if stimulus.win == win:
-                            stimulus.draw()
-                        else:
-                            logging.warning('BufferImageStim.__init__: user requested "%s" drawn in another window' % repr(stimulus))
+                        stimulus.draw(win=win)
                     except AttributeError:
                         logging.warning('BufferImageStim.__init__: "%s" failed to draw' % repr(stimulus))
             else:
@@ -131,15 +127,16 @@ class BufferImageStim(ImageStim):
         # take a screenshot of the buffer using win._getRegionOfFrame():
         glversion = pyglet.gl.gl_info.get_version()
         if glversion >= '2.1' and not sqPower2:
-            region = win._getRegionOfFrame(buffer=buffer, rect=rect)
+            sqPower2 = False
         else:
             if not sqPower2:
-                logging.debug('BufferImageStim.__init__: defaulting to square power-of-2 sized image (%s)' % glversion )
-            region = win._getRegionOfFrame(buffer=buffer, rect=rect, squarePower2=True)
+                logging.debug('BufferImageStim.__init__: defaulting to square power-of-2 sized image (%s)' % glversion)
+            sqPower2 = True
+        region = win._getRegionOfFrame(buffer=buffer, rect=rect, squarePower2=sqPower2, mode='RGB')
         if stim:
             win.clearBuffer()
 
-        # turn the RGBA region into an ImageStim() object:
+        # turn the RGB region into an ImageStim() object:
         if win.units in ['norm']:
             pos *= win.size/2.
 
@@ -190,12 +187,10 @@ class BufferImageStim(ImageStim):
         Allows dynamic position, size, rotation, mirroring, and opacity.
         Limitations / bugs: not sure what happens with shaders & self._updateList()
         """
-        if win==None:
-            win=self.win
-        self._selectWindow(win)
+        self._selectWindow(win or self.win)
 
         GL.glPushMatrix() # preserve state
-        #GL.glLoadIdentity()
+        GL.glLoadIdentity()
 
         GL.glScalef(self.thisScale[0] * (1,-1)[self.flipHoriz],  # dynamic flip
                     self.thisScale[1] * (1,-1)[self.flipVert], 1.0)
