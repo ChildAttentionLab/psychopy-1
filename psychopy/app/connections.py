@@ -316,19 +316,30 @@ class InstallUpdateDialog(wx.Dialog):
         fileSize = int(page.info()['Content-Length'])
         buffer=cStringIO.StringIO()
         self.progressBar.SetRange(fileSize)
+        import hashlib
+        sha = hashlib.sha256()
         while read<fileSize:
             ch=page.read(chunk)
             buffer.write(ch)
+            sha.update(ch)
             read+=chunk
             self.progressBar.SetValue(read)
-            msg = "Fetched %i of %i kb of PsychoPy-%s.zip" %(read/1000, fileSize/1000, v)
+            msg = _("Fetched %(done)i of %(total)i kb of PsychoPy-%(version)s.zip") % {'done':read/1000, 'total':fileSize/1000, 'version':v}
             self.statusMessage.SetLabel(msg)
             self.Update()
+        dgst = sha.hexdigest()
+        # want the 'raw' version of the file; https = encrypted but cert not verified:
+        digestsURL = 'https://raw.githubusercontent.com/jeremygray/psychopy/NF-check-digest/name_sha1_sha256.txt'
+        knownDigests = urllib2.urlopen(digestsURL).read()
+        if not dgst in knownDigests:
+            logging.warning('Update: unknown or corrupt download; unknown sha256 digest %s' % digest)
+        else:
+            logging.info('Update: known-good sha256 digest %(digest)s for %(version)s' % {'digest': digest, 'version': v})
         info+= 'Successfully downloaded PsychoPy-%s.zip' %v
         page.close()
         zfile = zipfile.ZipFile(buffer)
         #buffer.close()
-        return zfile, info
+        return zfile, info, dgst in knownDigests
 
     def installZipFile(self, zfile, v=None):
         """If v is provided this will be used as new version number, otherwise try and retrieve
@@ -417,7 +428,8 @@ class InstallUpdateDialog(wx.Dialog):
         if v=='latest':
             v=self.latest['version']
         self.statusMessage.SetLabel("Downloading PsychoPy v%s" %v)
-        try: zipFile, info =self.fetchPsychoPy(v)
+        try:
+            zipFile, info, goodDigest = self.fetchPsychoPy(v)
         except:
             self.statusMessage.SetLabel('Failed to fetch PsychoPy release.\nCheck proxy setting in preferences')
             return -1
