@@ -3,6 +3,7 @@
 # Distributed under the terms of the GNU General Public License (GPL).
 
 import urllib2, re, glob
+import hashlib
 import time, platform, sys, zipfile, os, cStringIO
 import wx
 import wx.lib.filebrowsebutton
@@ -316,7 +317,7 @@ class InstallUpdateDialog(wx.Dialog):
         fileSize = int(page.info()['Content-Length'])
         buffer=cStringIO.StringIO()
         self.progressBar.SetRange(fileSize)
-        import hashlib
+
         sha = hashlib.sha256()
         while read<fileSize:
             ch=page.read(chunk)
@@ -324,11 +325,13 @@ class InstallUpdateDialog(wx.Dialog):
             sha.update(ch)
             read+=chunk
             self.progressBar.SetValue(read)
-            msg = _("Fetched %(done)i of %(total)i kb of PsychoPy-%(version)s.zip") % {'done':read/1000, 'total':fileSize/1000, 'version':v}
+            msg = "Fetched %i of %i kb of PsychoPy-%s.zip" %(read/1000, fileSize/1000, v)
             self.statusMessage.SetLabel(msg)
             self.Update()
         dgst = sha.hexdigest()
-        # want the 'raw' version of the file; https = encrypted but cert not verified:
+        # want the 'raw' version of the file; github is a good host, want stable
+        # filename despite updates to the hash list
+        # TODO https = encrypted but cert not verified; fix = a lot of code, certs, etc
         digestsURL = 'https://raw.githubusercontent.com/jeremygray/psychopy/NF-check-digest/name_sha1_sha256.txt'
         knownDigests = urllib2.urlopen(digestsURL).read()
         if not dgst in knownDigests:
