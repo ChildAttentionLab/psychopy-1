@@ -3964,19 +3964,25 @@ class BuilderFrame(wx.Frame):
         else:
             toolbarSize = 32  # mac: 16 either doesn't work, or looks really bad with wx3
         self.toolbar.SetToolBitmapSize((toolbarSize,toolbarSize))
-        new_bmp = wx.Bitmap(os.path.join(self.app.prefs.paths['resources'], 'filenew%i.png' %toolbarSize), wx.BITMAP_TYPE_PNG)
-        open_bmp = wx.Bitmap(os.path.join(self.app.prefs.paths['resources'], 'fileopen%i.png' %toolbarSize), wx.BITMAP_TYPE_PNG)
-        save_bmp = wx.Bitmap(os.path.join(self.app.prefs.paths['resources'], 'filesave%i.png' %toolbarSize), wx.BITMAP_TYPE_PNG)
-        saveAs_bmp = wx.Bitmap(os.path.join(self.app.prefs.paths['resources'], 'filesaveas%i.png' %toolbarSize), wx.BITMAP_TYPE_PNG)
-        undo_bmp = wx.Bitmap(os.path.join(self.app.prefs.paths['resources'], 'undo%i.png' %toolbarSize),wx.BITMAP_TYPE_PNG)
-        redo_bmp = wx.Bitmap(os.path.join(self.app.prefs.paths['resources'], 'redo%i.png' %toolbarSize),wx.BITMAP_TYPE_PNG)
-        stop_bmp = wx.Bitmap(os.path.join(self.app.prefs.paths['resources'], 'stop%i.png' %toolbarSize),wx.BITMAP_TYPE_PNG)
-        run_bmp = wx.Bitmap(os.path.join(self.app.prefs.paths['resources'], 'run%i.png' %toolbarSize),wx.BITMAP_TYPE_PNG)
-        compile_bmp = wx.Bitmap(os.path.join(self.app.prefs.paths['resources'], 'compile%i.png' %toolbarSize),wx.BITMAP_TYPE_PNG)
-        settings_bmp = wx.Bitmap(os.path.join(self.app.prefs.paths['resources'], 'settingsExp%i.png' %toolbarSize), wx.BITMAP_TYPE_PNG)
-        preferences_bmp = wx.Bitmap(os.path.join(self.app.prefs.paths['resources'], 'preferences%i.png' %toolbarSize), wx.BITMAP_TYPE_PNG)
-        monitors_bmp = wx.Bitmap(os.path.join(self.app.prefs.paths['resources'], 'monitors%i.png' %toolbarSize), wx.BITMAP_TYPE_PNG)
-        #colorpicker_bmp = wx.Bitmap(os.path.join(self.app.prefs.paths['resources'], 'color%i.png' %toolbarSize), wx.BITMAP_TYPE_PNG)
+        tbSize = str(toolbarSize)
+        if sys.platform == 'darwin': # and HAVE_RETINA_SCREEN
+            tbSize += '@2x'  # high-density
+        join = os.path.join
+        res = self.paths['resources']
+        PNG = wx.BITMAP_TYPE_PNG
+        new_bmp = wx.Bitmap(join(res, 'filenew%s.png' % tbSize), PNG)
+        open_bmp = wx.Bitmap(join(res, 'fileopen%s.png' % tbSize), PNG)
+        save_bmp = wx.Bitmap(join(res, 'filesave%s.png' % tbSize), PNG)
+        saveAs_bmp = wx.Bitmap(join(res, 'filesaveas%s.png' % tbSize), PNG)
+        undo_bmp = wx.Bitmap(join(res, 'undo%s.png' % tbSize), PNG)
+        redo_bmp = wx.Bitmap(join(res, 'redo%s.png' % tbSize), PNG)
+        stop_bmp = wx.Bitmap(join(res, 'stop%s.png' % tbSize), PNG)
+        run_bmp = wx.Bitmap(join(res, 'run%s.png' % tbSize), PNG)
+        compile_bmp = wx.Bitmap(join(res, 'compile%s.png' % tbSize), PNG)
+        settings_bmp = wx.Bitmap(join(res, 'settingsExp%s.png' % tbSize), PNG)
+        preferences_bmp = wx.Bitmap(join(res, 'preferences%s.png' % tbSize), PNG)
+        monitors_bmp = wx.Bitmap(join(res, 'monitors%s.png' % tbSize), PNG)
+        #colorpicker_bmp = wx.Bitmap(join(res, 'color%s.png' % tbSize), PNG)
 
         ctrlKey = 'Ctrl+'  # show key-bindings in tool-tips in an OS-dependent way
         if sys.platform == 'darwin':
