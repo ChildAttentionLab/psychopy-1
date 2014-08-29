@@ -1468,8 +1468,8 @@ class CoderFrame(wx.Frame):
             toolbarSize = 32  # mac: 16 either doesn't work, or looks really bad with wx3
         self.toolbar.SetToolBitmapSize((toolbarSize,toolbarSize))
         tbSize = str(toolbarSize)
-        if sys.platform == 'darwin': # and HAVE_RETINA_SCREEN
-            tbSize += '@2x'  # high-density icons not auto-detected
+        if sys.platform == 'darwin': # and self.GetContentScaleFactor() == 2.0  # not working
+            tbSize += '@2x'  # use 2x high-density images for retina screens
         join = os.path.join
         res = self.paths['resources']
         PNG = wx.BITMAP_TYPE_PNG
